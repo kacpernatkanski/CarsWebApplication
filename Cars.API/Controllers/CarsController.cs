@@ -1,91 +1,76 @@
 ﻿
+using Cars.Application.Cars;
 using Cars.Domain.Entities;
-using Cars.Infrastructure.Data;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
-namespace Cars.API.Controllers
+namespace Cars.API.Controllers;
+
+public class CarsController : BaseApiController
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class CarsController : ControllerBase
+    private readonly ISender _sender;
+
+    public CarsController(ISender sender)
     {
-        private readonly DataContext _context;
+        _sender = sender;
+    }
 
-        public CarsController(DataContext context)
+    [HttpGet]
+    public async Task<ActionResult<List<Car>>> GetCars()
+    {
+        return await _sender.Send(new GetCarsList.Query());
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<Car>> GetCar(Guid id)
+    {
+        var car = await _sender.Send(new Details.Query { Id = id });
+
+        if (car is null)
         {
-            _context = context;
+            return NotFound();
         }
 
-        [HttpGet]
-        public async Task<ActionResult<List<Car>>> GetCars()
-        {
-            var cars = await _context.Cars.ToListAsync();
+        return car;
+    }
 
-            return Ok(cars);
+    [HttpPost]
+    public async Task<ActionResult<Car>> CreateCar(Car car)
+    {
+        var createdCar = await _sender.Send(
+            new Create.Command { Car = car });
+
+        return CreatedAtAction(
+            nameof(GetCar),
+            new { id = createdCar.Id },
+            createdCar);
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> EditCar(Guid id, Car car)
+    {
+        var result = await _sender.Send(
+            new Edit.Command { Id = id, Car = car });
+
+        if (!result)
+        {
+            return NotFound();
         }
 
-        [HttpGet("{id:guid}")]
-        public async Task<ActionResult<Car>> GetCar(Guid id)
+        return NoContent();
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteCar(Guid id)
+    {
+        var result = await _sender.Send(
+            new Delete.Command { Id = id });
+
+        if (!result)
         {
-            var car = await _context.Cars.FindAsync(id);
-
-            if (car == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(car);
+            return NotFound();
         }
 
-        [HttpPost]
-        public async Task<ActionResult<Car>> CreateCar(Car car)
-        {
-            _context.Cars.Add(car);
-
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetCar), new { id = car.Id }, car);
-        }
-
-        [HttpPut("{id:guid}")]
-        public async Task<IActionResult> UpdateCar(Guid id, Car car)
-        {
-            var existingCar = await _context.Cars.FindAsync(id);
-
-            if (existingCar is null)
-                return NotFound();
-
-            existingCar.Brand = car.Brand;
-            existingCar.Model = car.Model;
-            existingCar.DoorsNumber = car.DoorsNumber;
-            existingCar.LuggageCapacity = car.LuggageCapacity;
-            existingCar.EngineCapacity = car.EngineCapacity;
-            existingCar.FuelType = car.FuelType;
-            existingCar.ProductionDate = car.ProductionDate;
-            existingCar.AverageFuelConsumption = car.AverageFuelConsumption;
-            existingCar.BodyType = car.BodyType;
-
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> DeleteCar(Guid id)
-        {
-            var car = await _context.Cars.FindAsync(id);
-
-            if (car is null)
-                return NotFound();
-
-            _context.Cars.Remove(car);
-
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
+        return NoContent();
     }
 }
-
