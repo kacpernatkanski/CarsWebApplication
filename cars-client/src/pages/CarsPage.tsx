@@ -1,12 +1,38 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import axios from 'axios';
 import type { Car } from '../models/Car';
 import { getCars, deleteCar } from '../services/carService';
+import { useCarUiStore } from '../store/useCarUiStore';
+import CarCard from '../components/CarCard';
 
 export default function CarsPage() {
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const searchTerm = useCarUiStore(
+    (state) => state.searchTerm
+  );
+
+  const setSearchTerm = useCarUiStore(
+    (state) => state.setSearchTerm
+  );
+
+  const showFavoritesOnly = useCarUiStore(
+    (state) => state.showFavoritesOnly
+  );
+
+  const setShowFavoritesOnly = useCarUiStore(
+    (state) => state.setShowFavoritesOnly
+  );
+
+  const favoriteCarIds = useCarUiStore(
+    (state) => state.favoriteCarIds
+  );
+
+  const removeFavorite = useCarUiStore(
+    (state) => state.removeFavorite
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -16,7 +42,7 @@ export default function CarsPage() {
         setCars(data);
       })
       .catch((err: unknown) => {
-        if (err instanceof Error && err.name === 'AbortError') {
+        if (axios.isCancel(err)) {
           return;
         }
 
@@ -46,6 +72,9 @@ export default function CarsPage() {
 
     try {
       await deleteCar(id);
+
+      removeFavorite(id);
+
       setCars((currentCars) =>
         currentCars.filter((car) => car.id !== id)
       );
@@ -57,6 +86,20 @@ export default function CarsPage() {
       );
     }
   }
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const visibleCars = cars.filter((car) => {
+    const matchesSearch =
+      car.brand.toLowerCase().includes(normalizedSearch) ||
+      car.model.toLowerCase().includes(normalizedSearch);
+
+    const matchesFavorite =
+      !showFavoritesOnly ||
+      favoriteCarIds.includes(car.id);
+
+    return matchesSearch && matchesFavorite;
+  });
 
   if (loading) {
     return <p>Ładowanie samochodów...</p>;
@@ -74,26 +117,41 @@ export default function CarsPage() {
     <section>
       <h1>Lista samochodów</h1>
 
-      <ul>
-        {cars.map((car) => (
-          <li key={car.id}>
-            <strong>
-              {car.brand} {car.model}
-            </strong>
-            {' - '}
-            <Link to={`/cars/${car.id}`}>
-              Szczegóły
-            </Link>
-            {' | '}
-            <button
-              type="button"
-              onClick={() => handleDelete(car.id)}
-            >
-              Usuń
-            </button>
-          </li>
-        ))}
-      </ul>
+      <div className="cars-toolbar">
+        <input
+          type="search"
+          placeholder="Szukaj po marce lub modelu..."
+          value={searchTerm}
+          onChange={(event) =>
+            setSearchTerm(event.target.value)
+          }
+        />
+
+        <label className="favorite-filter">
+          <input
+            type="checkbox"
+            checked={showFavoritesOnly}
+            onChange={(event) =>
+              setShowFavoritesOnly(event.target.checked)
+            }
+          />
+          Tylko ulubione
+        </label>
+      </div>
+
+      {visibleCars.length === 0 ? (
+        <p>Nie znaleziono samochodów.</p>
+      ) : (
+        <ul>
+          {visibleCars.map((car) => (
+            <CarCard
+              key={car.id}
+              car={car}
+              onDelete={handleDelete}
+            />
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

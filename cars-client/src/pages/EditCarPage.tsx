@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import axios from 'axios';
 import type { NewCar } from '../models/Car';
 import { getCarById, updateCar } from '../services/carService';
 
@@ -24,11 +25,20 @@ export default function EditCarPage() {
 
     getCarById(id, controller.signal)
       .then((data) => {
-        const { id: carId, ...carData } = data;
-        setCar(carData);
+        setCar({
+          brand: data.brand,
+          model: data.model,
+          doorsNumber: data.doorsNumber,
+          luggageCapacity: data.luggageCapacity,
+          engineCapacity: data.engineCapacity,
+          fuelType: data.fuelType,
+          productionDate: data.productionDate.split('T')[0],
+          averageFuelConsumption: data.averageFuelConsumption,
+          bodyType: data.bodyType,
+        });
       })
       .catch((err: unknown) => {
-        if (err instanceof Error && err.name === 'AbortError') {
+        if (axios.isCancel(err)) {
           return;
         }
 
@@ -61,12 +71,10 @@ export default function EditCarPage() {
           'doorsNumber',
           'luggageCapacity',
           'engineCapacity',
-          'fuelType',
           'averageFuelConsumption',
-          'bodyType'
         ].includes(name)
           ? Number(value)
-          : value
+          : value,
       };
     });
   }
@@ -149,7 +157,9 @@ export default function EditCarPage() {
         </div>
 
         <div>
-          <label htmlFor="luggageCapacity">Pojemność bagażnika:</label>
+          <label htmlFor="luggageCapacity">
+            Pojemność bagażnika:
+          </label>
           <input
             id="luggageCapacity"
             name="luggageCapacity"
@@ -161,11 +171,14 @@ export default function EditCarPage() {
         </div>
 
         <div>
-          <label htmlFor="engineCapacity">Pojemność silnika:</label>
+          <label htmlFor="engineCapacity">
+            Pojemność silnika:
+          </label>
           <input
             id="engineCapacity"
             name="engineCapacity"
             type="number"
+            step="0.1"
             value={car.engineCapacity}
             onChange={handleChange}
             required
@@ -177,7 +190,7 @@ export default function EditCarPage() {
           <input
             id="fuelType"
             name="fuelType"
-            type="number"
+            type="text"
             value={car.fuelType}
             onChange={handleChange}
             required
@@ -185,7 +198,9 @@ export default function EditCarPage() {
         </div>
 
         <div>
-          <label htmlFor="productionDate">Data produkcji:</label>
+          <label htmlFor="productionDate">
+            Data produkcji:
+          </label>
           <input
             id="productionDate"
             name="productionDate"
@@ -216,7 +231,7 @@ export default function EditCarPage() {
           <input
             id="bodyType"
             name="bodyType"
-            type="number"
+            type="text"
             value={car.bodyType}
             onChange={handleChange}
             required

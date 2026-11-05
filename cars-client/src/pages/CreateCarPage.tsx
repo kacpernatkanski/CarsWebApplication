@@ -13,34 +13,32 @@ export default function CreateCarPage() {
     doorsNumber: 5,
     luggageCapacity: 0,
     engineCapacity: 0,
-    fuelType: 1,
+    fuelType: 'Petrol',
     productionDate: '',
     averageFuelConsumption: 0,
-    bodyType: 1
+    bodyType: 'Sedan',
   });
 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   function handleChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const { name, value } = event.target;
+  event: React.ChangeEvent<HTMLInputElement>
+) {
+  const { name, value } = event.target;
 
-    setCar((currentCar) => ({
-      ...currentCar,
-      [name]: [
-        'doorsNumber',
-        'luggageCapacity',
-        'engineCapacity',
-        'fuelType',
-        'averageFuelConsumption',
-        'bodyType'
-      ].includes(name)
-        ? Number(value)
-        : value
-    }));
-  }
+  setCar((currentCar) => ({
+    ...currentCar,
+    [name]: [
+      'doorsNumber',
+      'luggageCapacity',
+      'engineCapacity',
+      'averageFuelConsumption'
+    ].includes(name)
+      ? Number(value)
+      : value
+  }));
+}
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -131,7 +129,7 @@ export default function CreateCarPage() {
           <input
             id="fuelType"
             name="fuelType"
-            type="number"
+            type="text"
             value={car.fuelType}
             onChange={handleChange}
             required
@@ -170,7 +168,7 @@ export default function CreateCarPage() {
           <input
             id="bodyType"
             name="bodyType"
-            type="number"
+            type="text"
             value={car.bodyType}
             onChange={handleChange}
             required

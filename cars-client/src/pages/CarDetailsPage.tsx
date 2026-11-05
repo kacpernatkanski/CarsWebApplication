@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
+import axios from 'axios';
 import type { Car } from '../models/Car';
 import { getCarById } from '../services/carService';
+import { useCarUiStore } from '../store/useCarUiStore';
 
 export default function CarDetailsPage() {
   const { id } = useParams();
@@ -9,6 +11,14 @@ export default function CarDetailsPage() {
   const [car, setCar] = useState<Car | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const favoriteCarIds = useCarUiStore(
+    (state) => state.favoriteCarIds
+  );
+
+  const toggleFavorite = useCarUiStore(
+    (state) => state.toggleFavorite
+  );
 
   useEffect(() => {
     if (!id) {
@@ -24,7 +34,7 @@ export default function CarDetailsPage() {
         setCar(data);
       })
       .catch((err: unknown) => {
-        if (err instanceof Error && err.name === 'AbortError') {
+        if (axios.isCancel(err)) {
           return;
         }
 
@@ -55,6 +65,8 @@ export default function CarDetailsPage() {
     return <p>Nie znaleziono samochodu.</p>;
   }
 
+  const isFavorite = favoriteCarIds.includes(car.id);
+
   return (
     <section>
       <h1>
@@ -72,9 +84,23 @@ export default function CarDetailsPage() {
       <p><strong>Średnie spalanie:</strong> {car.averageFuelConsumption} l/100 km</p>
       <p><strong>Typ nadwozia:</strong> {car.bodyType}</p>
 
-      <Link to={`/cars/${car.id}/edit`}>Edytuj</Link>
-      {' | '}
-      <Link to="/cars">Powrót do listy samochodów</Link>
+      <button
+        type="button"
+        className={
+          isFavorite
+            ? 'favorite-button active-favorite'
+            : 'favorite-button'
+        }
+        onClick={() => toggleFavorite(car.id)}
+      >
+        {isFavorite ? 'Ulubiony' : 'Ulubione'}
+      </button>
+
+      <p>
+        <Link to={`/cars/${car.id}/edit`}>Edytuj</Link>
+        {' | '}
+        <Link to="/cars">Powrót do listy samochodów</Link>
+      </p>
     </section>
   );
 }

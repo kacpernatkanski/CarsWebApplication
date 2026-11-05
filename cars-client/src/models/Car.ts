@@ -5,10 +5,10 @@ export interface Car {
   doorsNumber: number;
   luggageCapacity: number;
   engineCapacity: number;
-  fuelType: number;
+  fuelType: string;
   productionDate: string;
   averageFuelConsumption: number;
-  bodyType: number;
+  bodyType: string;
 }
 
 export type NewCar = Omit<Car, 'id'>;
