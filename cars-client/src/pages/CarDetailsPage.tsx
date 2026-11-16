@@ -4,6 +4,7 @@ import axios from 'axios';
 import type { Car } from '../models/Car';
 import { getCarById } from '../services/carService';
 import { useCarUiStore } from '../store/useCarUiStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 export default function CarDetailsPage() {
   const { id } = useParams();
@@ -12,8 +13,10 @@ export default function CarDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const favoriteCarIds = useCarUiStore(
-    (state) => state.favoriteCarIds
+  const user = useAuthStore((state) => state.user);
+
+  const favoriteCarIdsByUser = useCarUiStore(
+    (state) => state.favoriteCarIdsByUser
   );
 
   const toggleFavorite = useCarUiStore(
@@ -65,6 +68,10 @@ export default function CarDetailsPage() {
     return <p>Nie znaleziono samochodu.</p>;
   }
 
+  const favoriteCarIds = user
+    ? favoriteCarIdsByUser[user.id] ?? []
+    : [];
+
   const isFavorite = favoriteCarIds.includes(car.id);
 
   return (
@@ -91,7 +98,11 @@ export default function CarDetailsPage() {
             ? 'favorite-button active-favorite'
             : 'favorite-button'
         }
-        onClick={() => toggleFavorite(car.id)}
+        onClick={() => {
+          if (user) {
+            toggleFavorite(user.id, car.id);
+          }
+        }}
       >
         {isFavorite ? 'Ulubiony' : 'Ulubione'}
       </button>
