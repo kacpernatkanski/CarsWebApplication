@@ -1,5 +1,6 @@
 ﻿
-using Cars.Domain.Entities;
+using Cars.Application.Cars.DTOs;
+using Cars.Application.Cars.Mappers;
 using Cars.Infrastructure.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -8,11 +9,11 @@ namespace Cars.Application.Cars;
 
 public class GetCarsList
 {
-    public class Query : IRequest<List<Car>>
+    public class Query : IRequest<List<CarDto>>
     {
     }
 
-    public class Handler : IRequestHandler<Query, List<Car>>
+    public class Handler : IRequestHandler<Query, List<CarDto>>
     {
         private readonly DataContext _context;
 
@@ -21,13 +22,17 @@ public class GetCarsList
             _context = context;
         }
 
-        public async Task<List<Car>> Handle(
+        public async Task<List<CarDto>> Handle(
             Query request,
             CancellationToken cancellationToken)
         {
-            return await _context.Cars
+            var cars = await _context.Cars
+                .Include(car => car.Photos)
+                .Include(car => car.Features)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
+
+            return cars.Select(CarMapper.ToDto).ToList();
         }
     }
 }

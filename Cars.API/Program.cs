@@ -116,6 +116,8 @@ using (var scope = app.Services.CreateScope())
 
     await Seed.SeedData(context);
 
+    await FeatureSeed.SeedAsync(context);
+
     var userManager = services.GetRequiredService<
         UserManager<AppUser>>();
 
@@ -134,6 +136,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseCors("CorsPolicy");
 

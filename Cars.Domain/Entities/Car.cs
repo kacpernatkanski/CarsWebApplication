@@ -17,5 +17,9 @@ namespace Cars.Domain.Entities
 
         public double AverageFuelConsumption { get; set; }
         public string BodyType { get; set; } = string.Empty;
+
+        public ICollection<CarPhoto> Photos { get; set; } = new List<CarPhoto>();
+
+        public ICollection<Feature> Features { get; set; } = new List<Feature>();
     }
 }
